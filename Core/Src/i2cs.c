@@ -82,7 +82,7 @@ extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirect
 					i2cs_w_buff[1] = item.key;
 				} else if (reg == REG_ID_INT) {
 					if (is_write)
-						reg_set_value(REG_ID_INT, 0);
+						reg_set_value(REG_ID_INT, reg_get_value(REG_ID_INT) & ~i2cs_r_buff[1]);
 					i2cs_w_buff[1] = reg_get_value(REG_ID_INT);
 					LL_GPIO_SetOutputPin(PICO_IRQ_GPIO_Port, PICO_IRQ_Pin);	// De-assert the IRQ signal
 				} else if (reg == REG_ID_VER) {

@@ -39,7 +39,6 @@ enum reg_id {
 #define INT_CAPSLOCK		(1 << 1)
 #define INT_NUMLOCK			(1 << 2)
 #define INT_KEY				(1 << 3)
-#define INT_PANIC			(1 << 4)
 
 #define PWR_CTRL_PICO_RST	(1)		//!< Request a pico power reset
 #define PWR_CTRL_FULL_RST	(2)		//!< Request a full power reset (pico + stm32)
@@ -63,6 +62,7 @@ uint8_t* reg_raw_access(void);
 void reg_set_value(enum reg_id reg, uint8_t value);
 uint8_t reg_is_bit_set(enum reg_id reg, uint8_t bit);
 void reg_set_bit(enum reg_id reg, uint8_t bit);
+
 void reg_init(void);
 uint32_t reg_check_and_save_eeprom(void);
 void reg_sync(void);

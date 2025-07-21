@@ -84,7 +84,7 @@ static uint32_t pmu_online = 0;
 
 
 // Private variables ---------------------------------------------------------
-//static void lock_cb(uint8_t caps_changed, uint8_t num_changed);
+static void lock_cb(const uint8_t caps_changed, const uint8_t num_changed);
 static void key_cb(char key, enum key_state state);
 static void hw_check_HP_presence(void);
 static void sync_bat(void);
@@ -208,6 +208,7 @@ int main(void) {
 	DEBUG_UART_MSG("\n\r");
 #endif
 	keyboard_set_key_callback(key_cb);
+	keyboard_set_lock_callback(lock_cb);
 
 	// PICO MCU start
 	sys_start_pico();
@@ -315,16 +316,18 @@ int main(void) {
 }
 
 
-/*
-static void lock_cb(uint8_t caps_changed, uint8_t num_changed) {
+
+// Private functions ---------------------------------------------------------
+
+static void lock_cb(const uint8_t caps_changed, const uint8_t num_changed) {
 	uint8_t int_trig = 0;
 
-	if (caps_changed && reg_is_bit_set(REG_ID_CFG, CFG_CAPSLOCK_INT)) {
+	if (caps_changed && reg_is_bit_set(REG_ID_INT_CFG, INT_CAPSLOCK)) {
 		reg_set_bit(REG_ID_INT, INT_CAPSLOCK);
 		int_trig = 1;
 	}
 
-	if (num_changed && reg_is_bit_set(REG_ID_CFG, CFG_NUMLOCK_INT)) {
+	if (num_changed && reg_is_bit_set(REG_ID_INT_CFG, INT_NUMLOCK)) {
 		reg_set_bit(REG_ID_INT, INT_NUMLOCK);
 		int_trig = 1;
 	}
@@ -334,7 +337,6 @@ static void lock_cb(uint8_t caps_changed, uint8_t num_changed) {
 		LL_GPIO_ResetOutputPin(PICO_IRQ_GPIO_Port, PICO_IRQ_Pin);		// Assert the IRQ signal to the pico
 #endif
 }
-*/
 
 static void key_cb(char key, enum key_state state) {
 	uint8_t int_trig = 0;
@@ -367,7 +369,8 @@ static void key_cb(char key, enum key_state state) {
 			int_trig = 1;
 		}
 
-		if (reg_is_bit_set(REG_ID_SYS_CFG, CFG_OVERFLOW_ON)) fifo_enqueue_force(item);
+		if (reg_is_bit_set(REG_ID_SYS_CFG, CFG_OVERFLOW_ON))
+			fifo_enqueue_force(item);
 	}
 
 #ifndef UART_PICO_INTERFACE

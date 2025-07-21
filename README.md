@@ -9,20 +9,35 @@ The main differences with the original firmware are the followings:
 - drastic reduction in the STM32's electricity consumption when running (~3.5 mA),
 - clean up (by removing stm32duino dependencies, use STM32HAL instead, maybe I'll switch to libopencm3 someday...) to reduce binary size (~25 KB) and allow more features to be implemented,
 - added configuration saving solution (using internal flash, including backlight option),
-- new I2C registers memory allocation and structure for cleaner evolution in feature (pico I2C driver updated to handle this version along with official)(WIP),
+- new I2C registers to access extended features (pico I2C driver updated to handle this version along with official),
 - interrupt event output to pico board can be configured during runtime (for keyboard event or RTC alarm),
 - rewriten or added some debug UART interface message (only when compiled in DEBUG release type),
 - internal RTC access through dedicated I2C registers,
 - auto wake-up using RTC (WIP),
 - lighten AXP2101 PMIC driver (based on X-PowersLib).
 
+## Tools version
+
+- ARM GNU GCC: 14.3-rel1_arm-none-eabi
+
 ## Compile
-This source code can be compiled using ARM gcc toolchain (using v13) in path and using make program.
+This source code can be compiled using ARM gcc toolchain in path and using make program.
 
-CAUTION: By default, I2C registers use a new, exploded structure that is more flexible! 
-But this makes them incompatible with official firmware. (More details to come about I2C registers structure in the wiki...)
+```
+git clone --recurse-submodules https://git.jcsmith.fr/jackcartersmith/picocalc_BIOS.git
+cd picocalc_BIOS
+make -j
+```
 
-If you plan using pico official firmware (PicoMite, etc.), you should set I2C_REGS_COMPAT = 1 in the Makefile.
+## Programming
+
+1. Unplug the picocalc and disconnect the batteries.
+2. Open the picocalc to access the DIP switch (SW701), put the 1 pin to ON.
+3. Connect the USB from the motherboard to the computer and press the power button.
+4. Open STM32CubeProgrammer, look for the UART access and connect.
+5. Use the compiled .bin/.elf firmware in the build folder and flash it on the STM32.
+6. Put the 1 pin of SW701 to OFF.
+7. Power reset everything like step 1.
 
 ## TODO
 - Registers memory structure/allocation rewrite
