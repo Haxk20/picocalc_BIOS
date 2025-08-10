@@ -600,6 +600,7 @@ __STATIC_INLINE void check_pmu_int(void) {
 			if (stop_mode_active == 1) {
 				stop_mode_active = 0;
 			} else {
+				key_cb(KEY_POWER, KEY_STATE_PRESSED);
 				if (keyboard_get_shift() && (reg_get_value(REG_ID_PWR_CTRL) == 0))
 					reg_set_value(REG_ID_PWR_CTRL, PWR_CTRL_PICO_RST);
 			}

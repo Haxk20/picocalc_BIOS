@@ -14,6 +14,7 @@ The main differences with the original firmware are the followings:
 - rewriten or added some debug UART interface message (only when compiled in DEBUG release type),
 - internal RTC access through dedicated I2C registers,
 - auto wake-up using RTC (WIP),
+- Pico reset using power button (Shift + short press on PWR button),
 - lighten AXP2101 PMIC driver (based on X-PowersLib).
 
 ## Tools version
@@ -40,8 +41,6 @@ make -j
 7. Power reset everything like step 1.
 
 ## TODO
-- Registers memory structure/allocation rewrite
-- IRQ to Pico management (register exist but does nothing)
 - Add a Pico test program for registers/features implemented
 - add few wiki page to detail the I2C protocol, added features, etc.
 

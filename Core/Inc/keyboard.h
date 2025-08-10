@@ -72,6 +72,7 @@ enum key_state {
 #define KEY_F9 0x89
 #define KEY_F10 0x90
 
+#define KEY_POWER 0x91
 
 extern uint8_t io_matrix[9];
 extern uint8_t js_bits;
