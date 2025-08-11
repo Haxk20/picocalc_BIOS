@@ -14,18 +14,20 @@ enum reg_id {
 	REG_ID_BKL = 0x05, // backlight steps (0-9)
 	REG_ID_DEB = 0x06, // debounce cfg
 	REG_ID_FRQ = 0x07, // poll freq cfg
-	REG_ID_PWR_CTRL = 0x08, // Power control (0: idle, 1: pico reset, 2: system reset, 3: reserved, 4: sleep, 5: full-shutdown)
+	REG_ID_RST = 0x08, // Reset control (0: nop, 1: pico reset, 2: full reset)
 	REG_ID_FIF = 0x09, // fifo
 	REG_ID_BK2 = 0x0A, // keyboard backlight (0-9)
 	REG_ID_BAT = 0x0B, // battery
 	REG_ID_C64_MTX = 0x0C,// read c64 matrix
 	REG_ID_C64_JS = 0x0D, // joystick io bits
-	REG_ID_INT_CFG = 0x0E, // IRQ config
-	REG_ID_RTC_CFG = 0x0F, // RTC general config
-	REG_ID_RTC_DATE = 0x10, // RTC date
-	REG_ID_RTC_TIME = 0x11, // RTC time
-	REG_ID_RTC_ALARM_DATE = 0x12, // RTC alarm date
-	REG_ID_RTC_ALARM_TIME = 0x13, // RTC alarm time
+	REG_ID_OFF = 0x0E, // PWR off control b7-6(0: nop, 1: sleep, 2: full-shutdown) b5-0(seconds before sleep/shutdown)
+
+	REG_ID_INT_CFG = 0x12, // IRQ config
+	REG_ID_RTC_CFG = 0x13, // RTC general config
+	REG_ID_RTC_DATE = 0x14, // RTC date
+	REG_ID_RTC_TIME = 0x15, // RTC time
+	REG_ID_RTC_ALARM_DATE = 0x16, // RTC alarm date
+	REG_ID_RTC_ALARM_TIME = 0x17, // RTC alarm time
 
 	REG_ID_LAST
 };
@@ -40,11 +42,11 @@ enum reg_id {
 #define INT_NUMLOCK			(1 << 2)
 #define INT_KEY				(1 << 3)
 
-#define PWR_CTRL_PICO_RST	(1)		//!< Request a pico power reset
-#define PWR_CTRL_FULL_RST	(2)		//!< Request a full power reset (pico + stm32)
-//#define PWR_CTRL_RESERVED	(3)
-#define PWR_CTRL_SLEEP		(4)		//!< Request a standard power off (stop pico, stm32 in sleep state)
-#define PWR_CTRL_SHUTDOWN	(5)		//!< Request a full shutdown of the picocalc (PMIC shutdown)
+#define RST_CTRL_PICO_RST	(1 << 0)	//!< Request a pico power reset
+#define RST_CTRL_FULL_RST	(1 << 1)	//!< Request a full power reset (pico + stm32)
+
+#define OFF_CTRL_SLEEP		(1 << 6)	//!< Request a standard power off (stop pico, stm32 in sleep state)
+#define OFF_CTRL_SHUTDOWN	(1 << 7)	//!< Request a full shutdown of the picocalc (PMIC shutdown)
 
 #define KEY_CAPSLOCK		(1 << 5)
 #define KEY_NUMLOCK			(1 << 6)

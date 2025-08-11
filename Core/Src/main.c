@@ -73,6 +73,7 @@ extern UART_HandleTypeDef huart3;
 
 volatile uint32_t systicks_counter = 0;		// 1 MHz systick counter
 static uint32_t pmu_check_counter = 0;
+static uint32_t off_delay_counter = 0;
 
 static uint8_t keycb_start = 0;
 static uint32_t head_phone_status = 0;	// TODO: Combine status registers
@@ -80,7 +81,7 @@ static uint32_t head_phone_status = 0;	// TODO: Combine status registers
 volatile uint8_t stop_mode_active = 0;
 
 volatile uint8_t pmu_irq = 0;
-static uint32_t pmu_online = 0;
+static uint8_t pmu_online = 0;
 
 
 // Private variables ---------------------------------------------------------
@@ -93,7 +94,8 @@ static void printPMU(void);
 #endif
 static void check_pmu_int(void);
 static void rtc_ctrl_reg_check(void);
-static void pwr_ctrl_reg_check(void);
+static void rst_ctrl_reg_check(void);
+static void off_ctrl_reg_check(void);
 static void sys_prepare_sleep(void);
 static void sys_wake_sleep(void);
 static void sys_stop_pico(void);
@@ -283,7 +285,8 @@ int main(void) {
 		keyboard_process();
 		hw_check_HP_presence();
 		rtc_ctrl_reg_check();
-		pwr_ctrl_reg_check();
+		rst_ctrl_reg_check();
+		off_ctrl_reg_check();
 
 		// Execute stop/sleep mode if requested
 		if (stop_mode_active == 1) {
@@ -312,6 +315,10 @@ int main(void) {
 			force_rtc_bck_sync();
 			sys_start_pico();
 		}
+
+		// Execute shutdown if requested
+		if ((off_delay_counter > 0) && (uptime_ms() >= off_delay_counter))
+			AXP2101_shutdown();		// Full shudown will rip the RTC configuration! Need to be reset at next reboot.
 	}
 }
 
@@ -601,8 +608,8 @@ __STATIC_INLINE void check_pmu_int(void) {
 				stop_mode_active = 0;
 			} else {
 				key_cb(KEY_POWER, KEY_STATE_PRESSED);
-				if (keyboard_get_shift() && (reg_get_value(REG_ID_PWR_CTRL) == 0))
-					reg_set_value(REG_ID_PWR_CTRL, PWR_CTRL_PICO_RST);
+				if (keyboard_get_shift() && (reg_get_value(REG_ID_RST) == 0))
+					reg_set_value(REG_ID_RST, RST_CTRL_PICO_RST);
 			}
 		}
 
@@ -672,10 +679,9 @@ __STATIC_INLINE void rtc_ctrl_reg_check(void) {
 	}
 }
 
-__STATIC_INLINE void pwr_ctrl_reg_check(void) {
-	switch (reg_get_value(REG_ID_PWR_CTRL)) {
-	case PWR_CTRL_PICO_RST:
-		reg_set_value(REG_ID_PWR_CTRL, 0);
+__STATIC_INLINE void rst_ctrl_reg_check(void) {
+	switch (reg_get_value(REG_ID_RST) & 0xC0) {
+	case RST_CTRL_PICO_RST:
 		HAL_Delay(200);		// Wait for final I2C answer
 		if (HAL_I2C_DisableListen_IT(&hi2c1) != HAL_OK)
 			Error_Handler();
@@ -689,8 +695,7 @@ __STATIC_INLINE void pwr_ctrl_reg_check(void) {
 		sys_start_pico();
 		break;
 
-	case PWR_CTRL_FULL_RST:
-		reg_set_value(REG_ID_PWR_CTRL, 0);
+	case RST_CTRL_FULL_RST:
 		HAL_Delay(200);		// Wait for final I2C answer
 		if (HAL_I2C_DisableListen_IT(&hi2c1) != HAL_OK)
 			Error_Handler();
@@ -699,28 +704,34 @@ __STATIC_INLINE void pwr_ctrl_reg_check(void) {
 		NVIC_SystemReset();
 		break;
 
-	//case PWR_CTRL_RESERVED:
-	//	break;
+	default:
+		break;
+	}
 
-	case PWR_CTRL_SLEEP:
-		reg_set_value(REG_ID_PWR_CTRL, 0);
+	reg_set_value(REG_ID_RST, 0);
+}
+
+__STATIC_INLINE void off_ctrl_reg_check(void) {
+	switch (reg_get_value(REG_ID_OFF) & 0xC0) {
+	case OFF_CTRL_SLEEP:
 		sys_stop_pico();
 		AXP2101_setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
 
 		stop_mode_active = 1;
 		break;
 
-	case PWR_CTRL_SHUTDOWN:
-		reg_set_value(REG_ID_PWR_CTRL, 0);
+	case OFF_CTRL_SHUTDOWN:
 		sys_stop_pico();
 		AXP2101_setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
 
-		AXP2101_shutdown();		// Full shudown will rip the RTC configuration! Need to be reset at next reboot.
+		off_delay_counter = uptime_ms() + ((reg_get_value(REG_ID_OFF) & 0x3F) * 1000);
 		break;
 
 	default:
 		break;
 	}
+
+	reg_set_value(REG_ID_OFF, 0);
 }
 
 __STATIC_INLINE void sys_prepare_sleep(void) {

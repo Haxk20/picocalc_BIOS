@@ -149,10 +149,14 @@ extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirect
 					i2cs_w_len = 10;
 				} else if (reg == REG_ID_C64_JS) {
 					i2cs_w_buff[1] = js_bits;
-				} else if (reg == REG_ID_PWR_CTRL) {
+				} else if (reg == REG_ID_RST) {
 					if (is_write)
-						reg_set_value(REG_ID_PWR_CTRL, i2cs_r_buff[1]);
-					i2cs_w_buff[1] = reg_get_value(REG_ID_PWR_CTRL);
+						reg_set_value(REG_ID_RST, i2cs_r_buff[1]);
+					i2cs_w_buff[1] = reg_get_value(REG_ID_RST);
+				} else if (reg == REG_ID_OFF) {
+					if (is_write)
+						reg_set_value(REG_ID_OFF, i2cs_r_buff[1]);
+					i2cs_w_buff[1] = reg_get_value(REG_ID_OFF);
 				} else {
 					i2cs_w_buff[0] = 0;
 					i2cs_w_buff[1] = 0;
