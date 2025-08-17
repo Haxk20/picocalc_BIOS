@@ -41,9 +41,11 @@ enum reg_id {
 #define INT_CAPSLOCK		(1 << 1)
 #define INT_NUMLOCK			(1 << 2)
 #define INT_KEY				(1 << 3)
+#define INT_RTC				(1 << 4)
+#define INT_PWR_BTN			(1 << 5)
 
-#define RST_CTRL_PICO_RST	(1 << 0)	//!< Request a pico power reset
-#define RST_CTRL_FULL_RST	(1 << 1)	//!< Request a full power reset (pico + stm32)
+#define RST_CTRL_PICO_RST	(1 << 6)	//!< Request a pico power reset
+#define RST_CTRL_FULL_RST	(1 << 7)	//!< Request a full power reset (pico + stm32)
 
 #define OFF_CTRL_SLEEP		(1 << 6)	//!< Request a standard power off (stop pico, stm32 in sleep state)
 #define OFF_CTRL_SHUTDOWN	(1 << 7)	//!< Request a full shutdown of the picocalc (PMIC shutdown)

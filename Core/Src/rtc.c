@@ -31,6 +31,10 @@ extern void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc) {
 	} else {
 		rtc_run_alarm();
 	}
+
+	// IRQ feedback
+	if (reg_is_bit_set(REG_ID_INT_CFG, INT_RTC))
+		reg_set_bit(REG_ID_INT, INT_RTC);
 }
 
 static uint32_t date_is_anterior(RTC_DateTypeDef* d1, RTC_DateTypeDef* d2) {

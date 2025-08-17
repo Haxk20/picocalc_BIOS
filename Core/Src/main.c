@@ -52,6 +52,8 @@
 
 
 // Private variables ---------------------------------------------------------
+
+// Peripherals interface
 extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
 
@@ -64,6 +66,7 @@ extern TIM_HandleTypeDef htim3;
 extern WWDG_HandleTypeDef hwwdg;
 
 #ifdef DEBUG
+// Debug UART interface, unused in release to limit consumption mainly
 extern UART_HandleTypeDef huart1;
 static const uint8_t hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 #endif
@@ -71,17 +74,17 @@ static const uint8_t hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9
 extern UART_HandleTypeDef huart3;
 #endif
 
+// Some internals counters
 volatile uint32_t systicks_counter = 0;		// 1 MHz systick counter
 static uint32_t pmu_check_counter = 0;
 static uint32_t off_delay_counter = 0;
 
+// Global status - TODO: Combine status registers, clean up
 static uint8_t keycb_start = 0;
-static uint32_t head_phone_status = 0;	// TODO: Combine status registers
-
-volatile uint8_t stop_mode_active = 0;
-
+static uint32_t head_phone_status = 0;
 volatile uint8_t pmu_irq = 0;
 static uint8_t pmu_online = 0;
+volatile uint8_t stop_mode_active = 0;
 
 
 // Private variables ---------------------------------------------------------
@@ -153,7 +156,7 @@ int main(void) {
 	if ((uint16_t)result != 0xCA1C) {
 		EEPROM_WriteVariable(EEPROM_VAR_BCKL, (EEPROM_Value)(uint16_t)((DEFAULT_LCD_BL << 8) | DEFAULT_KBD_BL), EEPROM_SIZE16);
 		EEPROM_WriteVariable(EEPROM_VAR_KBD, (EEPROM_Value)(uint32_t)((DEFAULT_KBD_DEB << 16) | DEFAULT_KBD_FREQ), EEPROM_SIZE32);
-		EEPROM_WriteVariable(EEPROM_VAR_CFG, (EEPROM_Value)(uint16_t)(((CFG_USE_MODS | CFG_REPORT_MODS) << 8) | (INT_OVERFLOW | INT_KEY)), EEPROM_SIZE16);
+		EEPROM_WriteVariable(EEPROM_VAR_CFG, (EEPROM_Value)(uint16_t)(((CFG_USE_MODS | CFG_REPORT_MODS) << 8) | (INT_OVERFLOW | INT_KEY | INT_RTC | INT_PWR_BTN)), EEPROM_SIZE16);
 		EEPROM_WriteVariable(EEPROM_VAR_ID, (EEPROM_Value)(uint16_t)0xCA1C, EEPROM_SIZE16);
 #ifdef DEBUG
 		DEBUG_UART_MSG("EEPROM first start!\n\r");
@@ -607,7 +610,14 @@ __STATIC_INLINE void check_pmu_int(void) {
 			if (stop_mode_active == 1) {
 				stop_mode_active = 0;
 			} else {
+				// Send the special key to keyboard FIFO, as legacy firmware do
 				key_cb(KEY_POWER, KEY_STATE_PRESSED);
+
+				// Check if this IRQ is configured and do the stuff
+				if (reg_is_bit_set(REG_ID_INT_CFG, INT_PWR_BTN))
+					reg_set_bit(REG_ID_INT, INT_PWR_BTN);
+
+				// In the case of shift is pressed in the same time, do a pico reset
 				if (keyboard_get_shift() && (reg_get_value(REG_ID_RST) == 0))
 					reg_set_value(REG_ID_RST, RST_CTRL_PICO_RST);
 			}
