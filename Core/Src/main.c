@@ -215,14 +215,7 @@ int main(void) {
 	keyboard_set_key_callback(key_cb);
 	keyboard_set_lock_callback(lock_cb);
 
-	// PICO MCU start
-	sys_start_pico();
-#ifdef DEBUG
-	DEBUG_UART_MSG("Pico started\n\r");
-#endif
-
-	HAL_Delay(500);
-	lcd_backlight_on();
+	HAL_Delay(200);
 
 	// It is necessary to disable the detection function of the TS pin on the
 	// board without the battery temperature detection function, otherwise it will
@@ -267,8 +260,16 @@ int main(void) {
 	AXP2101_setLowBatShutdownThreshold(5);  //This is related to the battery charging and discharging logic. If you're not sure what you're doing, please don't modify it, as it could damage the battery.
 
 	keycb_start = 1;
+	keyboard_process();
 	sync_bat();
 	low_bat();
+
+	// PICO MCU start
+	sys_start_pico();
+#ifdef DEBUG
+	DEBUG_UART_MSG("Pico started\n\r");
+#endif
+	lcd_backlight_on();
 
 #ifndef DEBUG
 	__HAL_WWDG_ENABLE();

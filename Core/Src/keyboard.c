@@ -322,110 +322,109 @@ static void next_item_state(struct list_item* const p_item, const uint8_t presse
 void keyboard_process(void) {
 	js_bits = 0xFF;
 
-	if (uptime_ms() - last_process_time <= reg_get_value(REG_ID_FRQ))
-		return;
+	if (uptime_ms() - last_process_time >= reg_get_value(REG_ID_FRQ)) {
+		last_process_time = uptime_ms();
 
-	// Scan for columns
-	for (uint8_t c = 0; c < NUM_OF_COLS; ++c) {
-		uint8_t col_value = 0;
-		// Enable the columns signal - OD logic
-		LL_GPIO_ResetOutputPin(col_pins[c].GPIOx, col_pins[c].PinMask);
+		// Scan for columns
+		for (uint8_t c = 0; c < NUM_OF_COLS; ++c) {
+			uint8_t col_value = 0;
+			// Enable the columns signal - OD logic
+			LL_GPIO_ResetOutputPin(col_pins[c].GPIOx, col_pins[c].PinMask);
 
-		// Scan for rows
-		for (uint8_t r = 0; r < NUM_OF_ROWS; ++r) {
-			const uint8_t pressed = (LL_GPIO_IsInputPinSet(row_pins[r].GPIOx, row_pins[r].PinMask) == 0);
-			uint8_t row_bit = (1 << r);
+			// Scan for rows
+			for (uint8_t r = 0; r < NUM_OF_ROWS; ++r) {
+				const uint8_t pressed = (LL_GPIO_IsInputPinSet(row_pins[r].GPIOx, row_pins[r].PinMask) == 0);
+				uint8_t row_bit = (1 << r);
 
-			if (pressed) {
-				if (c == 1 && r == 4)
-					js_bits &= ~row_bit;
-				col_value &= ~row_bit;
-			} else {
-				if (c == 1 && r == 4) {
-					js_bits |= row_bit;
+				if (pressed) {
+					if (c == 1 && r == 4)
+						js_bits &= ~row_bit;
+					col_value &= ~row_bit;
+				} else {
+					if (c == 1 && r == 4) {
+						js_bits |= row_bit;
+					}
+					col_value |= row_bit;
 				}
-				col_value |= row_bit;
-			}
 
-			const int32_t key_idx = (int32_t)((r * NUM_OF_COLS) + c);
-			int32_t list_idx = -1;
-			for (int32_t i = 0; i < KEY_LIST_SIZE; ++i) {
-				if (keys_list[i].p_entry != &((const struct entry*)kbd_entries)[key_idx])
-					continue;
+				const int32_t key_idx = (int32_t)((r * NUM_OF_COLS) + c);
+				int32_t list_idx = -1;
+				for (int32_t i = 0; i < KEY_LIST_SIZE; ++i) {
+					if (keys_list[i].p_entry != &((const struct entry*)kbd_entries)[key_idx])
+						continue;
 
-				list_idx = i;
-				break;
-			}
-
-			if (list_idx > -1) {
-				next_item_state(&keys_list[list_idx], pressed);
-				continue;
-			}
-
-			if (!pressed)
-				continue;
-
-			for (uint32_t i = 0; i < KEY_LIST_SIZE; ++i) {
-				if (keys_list[i].p_entry != NULL)
-				  continue;
-
-				keys_list[i].p_entry = &((const struct entry*)kbd_entries)[key_idx];
-				keys_list[i].state = KEY_STATE_IDLE;
-				next_item_state(&keys_list[i], pressed);
-
-				break;
-			}
-		}
-		// Disable the columns signal - OD logic
-		LL_GPIO_SetOutputPin(col_pins[c].GPIOx, col_pins[c].PinMask);
-
-		io_matrix[c] = col_value;
-		for (uint8_t b = 0; b < 12; ++b) {
-			const uint8_t pressed = (LL_GPIO_IsInputPinSet(btn_pins[b].GPIOx, btn_pins[b].PinMask) == 0);
-			if (b < 8) {	// read BTN1->BTN8
-				if (pressed)
-					io_matrix[b] &= (uint8_t)(~(1 << 7));
-				else
-					io_matrix[b] |= (1 << 7);
-			} else {		//c64 joystick arrow keys
-				//B12=left,, B11=down,B10 = up,B9 = right
-				if (pressed)
-					js_bits &= (uint8_t)(~(1 << (b - 8)));
-				else
-					js_bits |= (1 << (b - 8));
-			}
-
-			int8_t list_idx = -1;
-			for (int8_t i = 0; i < KEY_LIST_SIZE; ++i) {
-				if (keys_list[i].p_entry != &((const struct entry*)btn_entries)[b])
-					continue;
-
-				list_idx = i;
+					list_idx = i;
 					break;
-			}
+				}
 
-			if (list_idx > -1) {
-				next_item_state(&keys_list[list_idx], pressed);
-				continue;
-			}
+				if (list_idx > -1) {
+					next_item_state(&keys_list[list_idx], pressed);
+					continue;
+				}
 
-			if (!pressed)
-				continue;
-
-		    for (uint8_t i = 0 ; i < KEY_LIST_SIZE; ++i) {
-				if (keys_list[i].p_entry != NULL)
+				if (!pressed)
 					continue;
 
-				keys_list[i].p_entry = &((const struct entry*)btn_entries)[b];
-				keys_list[i].state = KEY_STATE_IDLE;
-				next_item_state(&keys_list[i], pressed);
+				for (uint32_t i = 0; i < KEY_LIST_SIZE; ++i) {
+					if (keys_list[i].p_entry != NULL)
+					  continue;
 
-				break;
-		    }
+					keys_list[i].p_entry = &((const struct entry*)kbd_entries)[key_idx];
+					keys_list[i].state = KEY_STATE_IDLE;
+					next_item_state(&keys_list[i], pressed);
+
+					break;
+				}
+			}
+			// Disable the columns signal - OD logic
+			LL_GPIO_SetOutputPin(col_pins[c].GPIOx, col_pins[c].PinMask);
+
+			io_matrix[c] = col_value;
+			for (uint8_t b = 0; b < 12; ++b) {
+				const uint8_t pressed = (LL_GPIO_IsInputPinSet(btn_pins[b].GPIOx, btn_pins[b].PinMask) == 0);
+				if (b < 8) {	// read BTN1->BTN8
+					if (pressed)
+						io_matrix[b] &= (uint8_t)(~(1 << 7));
+					else
+						io_matrix[b] |= (1 << 7);
+				} else {		//c64 joystick arrow keys
+					//B12=left,, B11=down,B10 = up,B9 = right
+					if (pressed)
+						js_bits &= (uint8_t)(~(1 << (b - 8)));
+					else
+						js_bits |= (1 << (b - 8));
+				}
+
+				int8_t list_idx = -1;
+				for (int8_t i = 0; i < KEY_LIST_SIZE; ++i) {
+					if (keys_list[i].p_entry != &((const struct entry*)btn_entries)[b])
+						continue;
+
+					list_idx = i;
+						break;
+				}
+
+				if (list_idx > -1) {
+					next_item_state(&keys_list[list_idx], pressed);
+					continue;
+				}
+
+				if (!pressed)
+					continue;
+
+				for (uint8_t i = 0 ; i < KEY_LIST_SIZE; ++i) {
+					if (keys_list[i].p_entry != NULL)
+						continue;
+
+					keys_list[i].p_entry = &((const struct entry*)btn_entries)[b];
+					keys_list[i].state = KEY_STATE_IDLE;
+					next_item_state(&keys_list[i], pressed);
+
+					break;
+				}
+			}
+
+			io_matrix[8] = 0xFF;
 		}
-
-		io_matrix[8] = 0xFF;
 	}
-
-	last_process_time = uptime_ms();
 }
