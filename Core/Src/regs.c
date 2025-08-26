@@ -18,9 +18,6 @@ static uint32_t regs_unsync[(REG_ID_LAST / 32) + 1] = {0};
 #define REGS_UNSYNC_GET(x)	((regs_unsync[(x / 32)] >> (x % 32)) & (uint32_t)0x1)
 
 inline uint8_t reg_get_value(enum reg_id reg) {
-	if (reg >= REG_ID_LAST)
-		return 0;
-
 	return regs[reg];
 }
 
@@ -29,25 +26,16 @@ inline uint8_t* reg_raw_access(void) {
 }
 
 inline void reg_set_value(enum reg_id reg, uint8_t value) {
-	if (reg >= REG_ID_LAST)
-		return;
-
 	regs[reg] = value;
 	REGS_UNSYNC_SET(reg);
 	eeprom_refresh_counter = uptime_ms();
 }
 
 inline uint8_t reg_is_bit_set(enum reg_id reg, uint8_t bit) {
-	if (reg >= REG_ID_LAST)
-			return 0;
-
 	return regs[reg] & bit;
 }
 
 inline void reg_set_bit(enum reg_id reg, uint8_t bit) {
-	if (reg >= REG_ID_LAST)
-			return;
-
 	regs[reg] |= bit;
 	REGS_UNSYNC_SET(reg);
 	eeprom_refresh_counter = uptime_ms();

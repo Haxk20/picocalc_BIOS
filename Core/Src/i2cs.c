@@ -185,6 +185,8 @@ extern void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c) {
 			// Check for another mandatories bytes depending on register requested
 			if (reg == REG_ID_BKL ||
 				reg == REG_ID_BK2 ||
+				reg == REG_ID_RST ||
+				reg == REG_ID_OFF ||
 				reg == REG_ID_SYS_CFG ||
 				reg == REG_ID_INT_CFG ||
 				reg == REG_ID_FRQ) {

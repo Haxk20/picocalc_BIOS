@@ -74,17 +74,18 @@ static const uint8_t hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9
 extern UART_HandleTypeDef huart3;
 #endif
 
-// Some internals counters
+// Some globals/internals counters
 volatile uint32_t systicks_counter = 0;		// 1 MHz systick counter
 static uint32_t pmu_check_counter = 0;
-static uint32_t off_delay_counter = 0;
+static volatile uint32_t off_delay_counter = 0;
 
 // Global status - TODO: Combine status registers, clean up
 static uint8_t keycb_start = 0;
 static uint32_t head_phone_status = 0;
 volatile uint8_t pmu_irq = 0;
 static uint8_t pmu_online = 0;
-volatile uint8_t stop_mode_active = 0;
+static volatile uint8_t stop_mode_active = 0;
+static volatile uint8_t pwr_off_active = 0;
 
 
 // Private variables ---------------------------------------------------------
@@ -215,8 +216,6 @@ int main(void) {
 	keyboard_set_key_callback(key_cb);
 	keyboard_set_lock_callback(lock_cb);
 
-	HAL_Delay(200);
-
 	// It is necessary to disable the detection function of the TS pin on the
 	// board without the battery temperature detection function, otherwise it will
 	// cause abnormal charging
@@ -292,37 +291,45 @@ int main(void) {
 		rst_ctrl_reg_check();
 		off_ctrl_reg_check();
 
-		// Execute stop/sleep mode if requested
-		if (stop_mode_active == 1) {
-			// Prepare peripherals to the low-power mode
-			force_rtc_bck_sync();
-			sys_stop_pico();
-			sys_prepare_sleep();
-
-			// Low-power mode entry
-#ifndef DEBUG
-			__HAL_WWDG_DISABLE();
-#endif
-			HAL_SuspendTick();
-			HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
-			SystemClock_Config();
-			HAL_ResumeTick();
-			HAL_Delay(300);
-
-			// Wake-up peripherals from low-power mode
-#ifndef DEBUG
-			HAL_WWDG_Refresh(&hwwdg);
-			__HAL_WWDG_ENABLE();
-#endif
-			sys_wake_sleep();
-			force_rtc_bck_load();
-			force_rtc_bck_sync();
-			sys_start_pico();
+		// If power off is requested, override sleep mode. TODO: transform to FSM instead
+		if (pwr_off_active == 1) {
+			// Execute shutdown if requested
+			if (uptime_ms() >= off_delay_counter) {
+				sys_stop_pico();
+				AXP2101_setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+				AXP2101_shutdown();		// Full shudown will rip the RTC configuration! Need to be reset at next reboot.
+			}
 		}
+		// Execute stop/sleep mode if requested
+		else if (stop_mode_active == 1) {
+			if (uptime_ms() >= off_delay_counter) {
+				// Prepare peripherals to the low-power mode
+				force_rtc_bck_sync();
+				sys_stop_pico();
+				AXP2101_setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+				sys_prepare_sleep();
 
-		// Execute shutdown if requested
-		if ((off_delay_counter > 0) && (uptime_ms() >= off_delay_counter))
-			AXP2101_shutdown();		// Full shudown will rip the RTC configuration! Need to be reset at next reboot.
+				// Low-power mode entry
+#ifndef DEBUG
+				__HAL_WWDG_DISABLE();
+#endif
+				HAL_SuspendTick();
+				HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
+				SystemClock_Config();
+				HAL_ResumeTick();
+				HAL_Delay(300);
+
+				// Wake-up peripherals from low-power mode
+#ifndef DEBUG
+				HAL_WWDG_Refresh(&hwwdg);
+				__HAL_WWDG_ENABLE();
+#endif
+				sys_wake_sleep();
+				force_rtc_bck_load();
+				force_rtc_bck_sync();
+				sys_start_pico();
+			}
+		}
 	}
 }
 
@@ -718,31 +725,20 @@ __STATIC_INLINE void rst_ctrl_reg_check(void) {
 	default:
 		break;
 	}
-
-	reg_set_value(REG_ID_RST, 0);
 }
 
 __STATIC_INLINE void off_ctrl_reg_check(void) {
-	switch (reg_get_value(REG_ID_OFF) & 0xC0) {
-	case OFF_CTRL_SLEEP:
-		sys_stop_pico();
-		AXP2101_setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+	if (!(pwr_off_active || stop_mode_active)) {
+		if (reg_get_value(REG_ID_OFF) & 0xC0) {
+			if (reg_is_bit_set(REG_ID_OFF, OFF_CTRL_SHUTDOWN))
+				pwr_off_active = 1;
+			else if (reg_is_bit_set(REG_ID_OFF, OFF_CTRL_SLEEP))
+				stop_mode_active = 1;
 
-		stop_mode_active = 1;
-		break;
-
-	case OFF_CTRL_SHUTDOWN:
-		sys_stop_pico();
-		AXP2101_setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
-
-		off_delay_counter = uptime_ms() + ((reg_get_value(REG_ID_OFF) & 0x3F) * 1000);
-		break;
-
-	default:
-		break;
+			if (pwr_off_active || stop_mode_active)
+				off_delay_counter = uptime_ms() + ((uint32_t)(reg_get_value(REG_ID_OFF) & 0x3F) * 1000);	// bits 5-0: delay in second
+		}
 	}
-
-	reg_set_value(REG_ID_OFF, 0);
 }
 
 __STATIC_INLINE void sys_prepare_sleep(void) {
