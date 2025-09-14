@@ -831,12 +831,17 @@ void HAL_WWDG_MspInit(WWDG_HandleTypeDef* hwwdg) {
   * @retval None
   */
 void Error_Handler(void) {
-	// User can add his own implementation to report the HAL error return state
-	//TODO: replace with dedicated, non-blocking, error handler
+	// When the southbridge is in hardfault condition,
+	// make the front led blink.
+	// The watchdog is disabled to avoid pico reset.
+	//TODO: to be tested...
+#ifndef DEBUG
+	__HAL_WWDG_DISABLE();
+#endif
 	__disable_irq();
 	while (1) {
-		LL_GPIO_SetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
-		HAL_Delay(500);
+		LL_GPIO_TogglePin(SYS_LED_GPIO_Port, SYS_LED_Pin);
+		HAL_Delay(300);
 	}
 }
 
@@ -857,16 +862,22 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
+//TODO: need rewrite to avoid interfere with the watchdog
 void flash_one_time(uint32_t ts, uint8_t restore_status) {
+#ifndef DEBUG
+		__HAL_WWDG_DISABLE();
+#endif
+
 	for (size_t i = 0; i < ts; i++) {
-//#ifndef DEBUG
-//		LL_IWDG_ReloadCounter(IWDG);
-//#endif
 		LL_GPIO_ResetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
 		HAL_Delay(400);
 		LL_GPIO_SetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
 		HAL_Delay(200);
 	}
+
+#ifndef DEBUG
+		__HAL_WWDG_ENABLE();
+#endif
 
 	if (restore_status)
 		LL_GPIO_ResetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
