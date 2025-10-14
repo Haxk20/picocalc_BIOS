@@ -132,17 +132,6 @@ extern "C" {
 #define KBD_BCKL_STEPS 4
 
 
-#ifdef __HAL_WWDG_ENABLE
-#undef __HAL_WWDG_ENABLE
-#endif
-#define __HAL_WWDG_ENABLE()	__HAL_RCC_WWDG_CLK_ENABLE()
-
-#ifdef __HAL_WWDG_DISABLE
-#undef __HAL_WWDG_DISABLE
-#endif
-#define __HAL_WWDG_DISABLE()	__HAL_RCC_WWDG_CLK_DISABLE()
-
-
 // Structure definition ---------------------------------------------------------------
 typedef union {
     uint32_t raw;

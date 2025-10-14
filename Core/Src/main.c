@@ -270,14 +270,7 @@ int main(void) {
 #endif
 	lcd_backlight_on();
 
-#ifndef DEBUG
-	__HAL_WWDG_ENABLE();
-#endif
 	while (1) {
-#ifndef DEBUG
-		HAL_WWDG_Refresh(&hwwdg);
-#endif
-
 		// Re-arm I2CS in case of lost master signal
 		if (i2cs_state != I2CS_STATE_IDLE && ((uptime_ms() - i2cs_rearm_counter) > I2CS_REARM_TIMEOUT))
 			i2cs_state = I2CS_STATE_IDLE;
@@ -311,9 +304,6 @@ int main(void) {
 				sys_prepare_sleep();
 
 				// Low-power mode entry
-#ifndef DEBUG
-				__HAL_WWDG_DISABLE();
-#endif
 				HAL_SuspendTick();
 				HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
 				SystemClock_Config();
@@ -321,10 +311,6 @@ int main(void) {
 				HAL_Delay(300);
 
 				// Wake-up peripherals from low-power mode
-#ifndef DEBUG
-				HAL_WWDG_Refresh(&hwwdg);
-				__HAL_WWDG_ENABLE();
-#endif
 				sys_wake_sleep();
 				force_rtc_bck_load();
 				force_rtc_bck_sync();

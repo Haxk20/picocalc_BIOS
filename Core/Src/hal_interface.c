@@ -367,23 +367,6 @@ static void MX_USART3_UART_Init(void) {
 }
 
 /**
-  * @brief WWDG Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_WWDG_Init(void) {
-	hwwdg.Instance = WWDG;
-	hwwdg.Init.Prescaler = WWDG_PRESCALER_2;
-	hwwdg.Init.Window = 127;
-	hwwdg.Init.Counter = 127;
-	hwwdg.Init.EWIMode = WWDG_EWI_DISABLE;
-	if (HAL_WWDG_Init(&hwwdg) != HAL_OK)
-		Error_Handler();
-	// Not using it for now
-	__HAL_WWDG_DISABLE();
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -817,17 +800,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart) {
 #endif
 }
 
-/**
-  * @brief WWDG MSP Initialization
-  * This function configures the hardware resources used in this example
-  * @param hwwdg: WWDG handle pointer
-  * @retval None
-  */
-void HAL_WWDG_MspInit(WWDG_HandleTypeDef* hwwdg) {
-	if(hwwdg->Instance==WWDG)
-		__HAL_RCC_WWDG_CLK_ENABLE();
-}
-
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -836,16 +808,13 @@ void HAL_WWDG_MspInit(WWDG_HandleTypeDef* hwwdg) {
 void Error_Handler(void) {
 	// When the southbridge is in hardfault condition,
 	// make the front led blink.
-	// The watchdog is disabled to avoid pico reset.
-	//TODO: to be tested...
-#ifndef DEBUG
-	__HAL_WWDG_DISABLE();
-#endif
+	// TODO: Wait sometime before use NVIC_SystemReset()
 	__disable_irq();
 	while (1) {
 		LL_GPIO_TogglePin(SYS_LED_GPIO_Port, SYS_LED_Pin);
 		HAL_Delay(300);
 	}
+	NVIC_SystemReset();
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -937,9 +906,6 @@ HAL_StatusTypeDef HAL_Interface_init(void) {
 		MX_RTC_Init();
 	MX_USART1_UART_Init();
 	MX_USART3_UART_Init();
-#ifndef DEBUG
-	MX_WWDG_Init();
-#endif
 	MX_TIM1_Init();
 	MX_TIM3_Init();
 	MX_TIM2_Init();
