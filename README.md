@@ -3,19 +3,18 @@
 This is my personnal rewrite of the [original](https://github.com/clockworkpi/PicoCalc/tree/master/Code/picocalc_keyboard)
 PicoCalc STM32F103R8T6 firmware.
 
-## Features differences
-The main differences with the original firmware are the followings:
+Some detailed [wiki pages](https://git.jcsmith.fr/jackcartersmith/picocalc_BIOS/wiki) are available.
+
+The primary objectives of this firmware are to be more efficient both functionally and electrically.
+This include:
 
 - drastic reduction in the STM32's electricity consumption when running (~3.5 mA),
-- clean up (by removing stm32duino dependencies, use STM32HAL instead, maybe I'll switch to libopencm3 someday...) to reduce binary size (~25 KB) and allow more features to be implemented,
+- switch backend lib stm32duino to STM32HAL. It's help reducing binary size (~25 KB) and allow more features to be implemented that way,
 - added configuration saving solution (using internal flash, including backlight option),
-- new I2C registers to access extended features (pico I2C driver updated to handle this version along with official),
-- interrupt event output to pico board can be configured during runtime (for keyboard event or RTC alarm),
-- rewriten or added some debug UART interface message (only when compiled in DEBUG release type),
 - internal RTC access through dedicated I2C registers,
-- auto wake-up using RTC (WIP),
-- Pico reset using power button (Shift + short press on PWR button),
-- lighten AXP2101 PMIC driver (based on X-PowersLib).
+- main MCU (pico) reset using power button (Shift + short press on PWR button),
+- lighten components drivers,
+- auto wake-up using RTC (WIP)...
 
 ## Tools version
 
@@ -42,7 +41,6 @@ make -j
 
 ## TODO
 - Add a Pico test program for registers/features implemented
-- add few wiki page to detail the I2C protocol, added features, etc.
 
 ## Important notes
 The current implementation of this firmware is subject to change until the v1 release.
