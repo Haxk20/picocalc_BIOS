@@ -11,7 +11,7 @@ inline uint8_t fifo_count(void) {
 	return count;
 }
 
-void fifo_flush(void) {
+inline void fifo_flush(void) {
 	write_idx = 0;
 	read_idx = 0;
 	count = 0;

@@ -157,7 +157,7 @@ int main(void) {
 	if ((uint16_t)result != 0xCA1C) {
 		EEPROM_WriteVariable(EEPROM_VAR_BCKL, (EEPROM_Value)(uint16_t)((DEFAULT_LCD_BL << 8) | DEFAULT_KBD_BL), EEPROM_SIZE16);
 		EEPROM_WriteVariable(EEPROM_VAR_KBD, (EEPROM_Value)(uint32_t)((DEFAULT_KBD_DEB << 16) | DEFAULT_KBD_FREQ), EEPROM_SIZE32);
-		EEPROM_WriteVariable(EEPROM_VAR_CFG, (EEPROM_Value)(uint16_t)(((CFG_USE_MODS | CFG_REPORT_MODS) << 8) | (INT_OVERFLOW | INT_KEY | INT_RTC | INT_PWR_BTN)), EEPROM_SIZE16);
+		EEPROM_WriteVariable(EEPROM_VAR_CFG, (EEPROM_Value)(uint16_t)(((CFG_USE_MODS | CFG_REPORT_MODS | CFG_RST_DELAY_1S) << 8) | (INT_OVERFLOW | INT_KEY | INT_RTC | INT_PWR_BTN)), EEPROM_SIZE16);
 		EEPROM_WriteVariable(EEPROM_VAR_ID, (EEPROM_Value)(uint16_t)0xCA1C, EEPROM_SIZE16);
 #ifdef DEBUG
 		DEBUG_UART_MSG("EEPROM first start!\n\r");
@@ -614,7 +614,7 @@ __STATIC_INLINE void check_pmu_int(void) {
 
 				// In the case of shift is pressed in the same time, do a pico reset
 				if (keyboard_get_shift() && (reg_get_value(REG_ID_RST) == 0))
-					reg_set_value(REG_ID_RST, RST_CTRL_PICO_RST);
+					reg_set_value(REG_ID_RST, RST_CTRL_FULL_RST);
 			}
 		}
 
@@ -687,12 +687,13 @@ __STATIC_INLINE void rtc_ctrl_reg_check(void) {
 __STATIC_INLINE void rst_ctrl_reg_check(void) {
 	switch (reg_get_value(REG_ID_RST) & 0xC0) {
 	case RST_CTRL_PICO_RST:
-		HAL_Delay(200);		// Wait for final I2C answer
+		HAL_Delay(300);		// Wait for final I2C answer
 		if (HAL_I2C_DisableListen_IT(&hi2c1) != HAL_OK)
 			Error_Handler();
 
+		reg_set_value(REG_ID_RST, 0);
 		sys_stop_pico();
-		HAL_Delay(200);		// No need to use keyboard, so a simple delay should suffice
+
 		if (HAL_I2C_GetState(&hi2c1) == HAL_I2C_STATE_READY)
 			if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK)
 				HAL_Interface_I2C1_reset();
@@ -704,7 +705,18 @@ __STATIC_INLINE void rst_ctrl_reg_check(void) {
 		HAL_Delay(200);		// Wait for final I2C answer
 		if (HAL_I2C_DisableListen_IT(&hi2c1) != HAL_OK)
 			Error_Handler();
+
 		sys_stop_pico();
+
+		const uint8_t delay_mode = (uint8_t)(reg_get_value(REG_ID_SYS_CFG) & CFG_RST_DELAY);
+		if (delay_mode == CFG_RST_DELAY_1S)
+			HAL_Delay(1000);
+		else if (delay_mode == CFG_RST_DELAY_3S)
+			HAL_Delay(3000);
+		else if (delay_mode == CFG_RST_DELAY_5S)
+			HAL_Delay(5000);
+		else
+			HAL_Delay(200);
 
 		NVIC_SystemReset();
 		break;

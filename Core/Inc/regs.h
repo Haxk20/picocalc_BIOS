@@ -32,9 +32,14 @@ enum reg_id {
 	REG_ID_LAST
 };
 
-#define CFG_OVERFLOW_ON		(1 << 0) //When a FIFO overflow happens, should the new entry still be pushed, overwriting the oldest one. If 0 then new entry is lost.
-#define CFG_REPORT_MODS		(1 << 6) // Should Alt, Sym and Shifts be reported as well
-#define CFG_USE_MODS		(1 << 7) // Should Alt, Sym and Shifts modify the keys reported
+#define CFG_OVERFLOW_ON		(1 << 0)	//When a FIFO overflow happens, should the new entry still be pushed, overwriting the oldest one. If 0 then new entry is lost.
+#define CFG_RST_DELAY		(3 << 2)	// 2 bit config of reset delay.
+#define CFG_RST_DELAY_200M	(0 << 2)
+#define CFG_RST_DELAY_1S	(1 << 2)
+#define CFG_RST_DELAY_3S	(2 << 2)
+#define CFG_RST_DELAY_5S	(3 << 2)
+#define CFG_REPORT_MODS		(1 << 6)	// Should Alt, Sym and Shifts be reported as well
+#define CFG_USE_MODS		(1 << 7)	// Should Alt, Sym and Shifts modify the keys reported
 // CFG_STICKY_MODS // Pressing and releasing a mod affects next key pressed
 
 #define INT_OVERFLOW		(1 << 0)
