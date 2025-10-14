@@ -290,6 +290,7 @@ int main(void) {
 		rtc_ctrl_reg_check();
 		rst_ctrl_reg_check();
 		off_ctrl_reg_check();
+		led_blink_refresh();
 
 		// If power off is requested, override sleep mode. TODO: transform to FSM instead
 		if (pwr_off_active == 1) {

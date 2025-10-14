@@ -13,7 +13,7 @@ void show_bat_segs(void) {
 	uint8_t pcnt;
 	if (AXP2101_getBatteryPercent(&pcnt) != HAL_OK)
 		return;
-	uint8_t prev_state = (LL_GPIO_IsOutputPinSet(SYS_LED_GPIO_Port, SYS_LED_Pin) == 0);
+
 	uint8_t blink_cnt = 1;
 
 	//if(pcnt > 0 && pcnt < 33)
@@ -24,10 +24,11 @@ void show_bat_segs(void) {
 	else if(pcnt >= 66 && pcnt <= 100)
 		blink_cnt = 3;
 
-	flash_one_time(blink_cnt, prev_state);
-
 	if (AXP2101_isCharging())
 		start_chg();
+
+	uint8_t prev_state = (LL_GPIO_IsOutputPinSet(SYS_LED_GPIO_Port, SYS_LED_Pin) == 0);
+	led_blink_configure(blink_cnt, prev_state);
 }
 
 // CAUTION: This is related to the battery charging and discharging logic. If you're not sure what you're doing, please don't modify it, as it could damage the battery.

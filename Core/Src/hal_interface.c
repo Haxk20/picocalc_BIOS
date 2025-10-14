@@ -44,6 +44,9 @@ volatile uint8_t rtc_reg_xor_events = 0;
 volatile RTC_TimeTypeDef_u rtc_alarm_time = {.raw = 0x00000000};
 volatile RTC_DateTypeDef_u rtc_alarm_date = {.raw = 0x00010101};
 
+static volatile uint8_t led_blink_remaining = 0;
+static volatile uint32_t led_blink_counter = 0;
+
 static void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 
@@ -862,27 +865,46 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-//TODO: need rewrite to avoid interfere with the watchdog
-void flash_one_time(uint32_t ts, uint8_t restore_status) {
-#ifndef DEBUG
-		__HAL_WWDG_DISABLE();
-#endif
+uint32_t led_blink_configure(const uint8_t blink_nbr, const uint8_t restore_status) {
+	// In case a blink cycle is already occuring,
+	// return NOK condition.
+	if (led_blink_remaining != 0)
+		return 1;
 
-	for (size_t i = 0; i < ts; i++) {
-		LL_GPIO_ResetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
-		HAL_Delay(400);
-		LL_GPIO_SetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
-		HAL_Delay(200);
-	}
+	led_blink_remaining = blink_nbr;
+	LL_GPIO_ResetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
+	led_blink_counter = uptime_ms();
 
-#ifndef DEBUG
-		__HAL_WWDG_ENABLE();
-#endif
-
+	// The 7th bit is used to memorise the ending state
 	if (restore_status)
-		LL_GPIO_ResetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
-	else
-		LL_GPIO_SetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
+		led_blink_remaining |= (uint8_t)(1 << 7);
+
+	return 0;
+}
+
+void led_blink_refresh(void) {
+	if (led_blink_remaining != 0) {
+		if (LL_GPIO_IsOutputPinSet(SYS_LED_GPIO_Port, SYS_LED_Pin)) {
+		    if (uptime_ms() >= (led_blink_counter + 200)) {
+				led_blink_counter = uptime_ms();
+		        LL_GPIO_ResetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin); // - ON
+
+				if ((led_blink_remaining & 0x7F) == 1) {
+					if ((led_blink_remaining & (1 << 7)) == 0)	// Check if restore is off
+						LL_GPIO_SetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);
+
+					led_blink_remaining = 0;
+				} else {
+					--led_blink_remaining;
+				}
+			}
+		} else {
+		    if (uptime_ms() >= (led_blink_counter + 400)) {
+				led_blink_counter = uptime_ms();
+		        LL_GPIO_SetOutputPin(SYS_LED_GPIO_Port, SYS_LED_Pin);   // - OFF
+			}
+		}
+	}
 }
 
 /**

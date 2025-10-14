@@ -170,7 +170,8 @@ HAL_StatusTypeDef HAL_Interface_init(void);
 void HAL_Interface_I2C1_reset(void);
 
 __STATIC_INLINE uint32_t uptime_ms(void) { return systicks_counter; }
-void flash_one_time(uint32_t ts, uint8_t restore_status);
+uint32_t led_blink_configure(const uint8_t blink_nbr, const uint8_t restore_status);
+void led_blink_refresh(void);
 
 void Error_Handler(void);
 
