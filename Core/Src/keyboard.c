@@ -428,3 +428,19 @@ void keyboard_process(void) {
 		}
 	}
 }
+
+void keyboard_reset(void) {
+	uint32_t i;
+
+    for (i = 0 ; i < KEY_LIST_SIZE; ++i)
+        keys_list[i].p_entry = NULL;
+
+    for (i = 0 ; i < MOD_LAST; ++i)
+		mods[i] = 0;
+
+    capslock = 0;
+    numlock = 0;
+    capslock_changed = 0;
+    numlock_changed = 0;
+}
+

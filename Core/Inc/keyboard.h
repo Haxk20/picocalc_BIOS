@@ -89,6 +89,7 @@ void keyboard_set_hold_period(uint16_t);
 uint8_t keyboard_get_shift(void);
 uint8_t keyboard_get_alt(void);
 void keyboard_process(void);
+void keyboard_reset(void);
 
 
 #ifdef __cplusplus

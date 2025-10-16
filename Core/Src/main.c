@@ -614,7 +614,7 @@ __STATIC_INLINE void check_pmu_int(void) {
 
 				// In the case of shift is pressed in the same time, do a pico reset
 				if (keyboard_get_shift() && (reg_get_value(REG_ID_RST) == 0))
-					reg_set_value(REG_ID_RST, RST_CTRL_FULL_RST);
+					reg_set_value(REG_ID_RST, RST_CTRL_PICO_RST);
 			}
 		}
 
@@ -685,44 +685,41 @@ __STATIC_INLINE void rtc_ctrl_reg_check(void) {
 }
 
 __STATIC_INLINE void rst_ctrl_reg_check(void) {
-	switch (reg_get_value(REG_ID_RST) & 0xC0) {
-	case RST_CTRL_PICO_RST:
-		HAL_Delay(300);		// Wait for final I2C answer
-		if (HAL_I2C_DisableListen_IT(&hi2c1) != HAL_OK)
-			Error_Handler();
+	const uint8_t rst_reg = (reg_get_value(REG_ID_RST) & 0xC0);
+    const uint8_t delay_mode = (uint8_t)(reg_get_value(REG_ID_SYS_CFG) & CFG_RST_DELAY);
 
-		reg_set_value(REG_ID_RST, 0);
-		sys_stop_pico();
+    if (rst_reg == 0)
+    	return;
+
+    HAL_Delay(300);		// Wait for final I2C answer
+	if (HAL_I2C_DisableListen_IT(&hi2c1) != HAL_OK)
+		Error_Handler();
+
+	reg_set_value(REG_ID_RST, 0);
+	sys_stop_pico();
+
+	if (delay_mode == CFG_RST_DELAY_1S)
+		HAL_Delay(1000);
+	else if (delay_mode == CFG_RST_DELAY_3S)
+		HAL_Delay(3000);
+	else if (delay_mode == CFG_RST_DELAY_5S)
+		HAL_Delay(5000);
+	else
+		HAL_Delay(200);
+
+	if (rst_reg == RST_CTRL_PICO_RST) {
+        // Keyboard reset for detecting boot key press
+        fifo_flush();
+        keyboard_reset();
+        keyboard_process();
 
 		if (HAL_I2C_GetState(&hi2c1) == HAL_I2C_STATE_READY)
 			if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK)
 				HAL_Interface_I2C1_reset();
 
 		sys_start_pico();
-		break;
-
-	case RST_CTRL_FULL_RST:
-		HAL_Delay(200);		// Wait for final I2C answer
-		if (HAL_I2C_DisableListen_IT(&hi2c1) != HAL_OK)
-			Error_Handler();
-
-		sys_stop_pico();
-
-		const uint8_t delay_mode = (uint8_t)(reg_get_value(REG_ID_SYS_CFG) & CFG_RST_DELAY);
-		if (delay_mode == CFG_RST_DELAY_1S)
-			HAL_Delay(1000);
-		else if (delay_mode == CFG_RST_DELAY_3S)
-			HAL_Delay(3000);
-		else if (delay_mode == CFG_RST_DELAY_5S)
-			HAL_Delay(5000);
-		else
-			HAL_Delay(200);
-
+	} else if (rst_reg == RST_CTRL_FULL_RST) {
 		NVIC_SystemReset();
-		break;
-
-	default:
-		break;
 	}
 }
 
