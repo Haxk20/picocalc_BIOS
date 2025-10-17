@@ -306,6 +306,8 @@ int main(void) {
 				// Low-power mode entry
 				HAL_SuspendTick();
 				HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
+				stop_mode_active = 0;
+				reg_unset_bit(REG_ID_OFF, OFF_CTRL_SLEEP);
 				SystemClock_Config();
 				HAL_ResumeTick();
 				HAL_Delay(300);
@@ -602,9 +604,7 @@ __STATIC_INLINE void check_pmu_int(void) {
 
 			printPMU();
 #endif
-			if (stop_mode_active == 1) {
-				stop_mode_active = 0;
-			} else {
+			if (stop_mode_active == 0) {
 				// Send the special key to keyboard FIFO, as legacy firmware do
 				key_cb(KEY_POWER, KEY_STATE_PRESSED);
 
@@ -626,9 +626,7 @@ __STATIC_INLINE void check_pmu_int(void) {
 			//uint8_t data[4] = {1, 2, 3, 4};
 			//PMU.writeDataBuffer(data, XPOWERS_AXP2101_DATA_BUFFER_SIZE);
 
-			if (stop_mode_active == 1) {
-				stop_mode_active = 0;
-			} else {
+			if (stop_mode_active == 0) {
 				AXP2101_setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
 				stop_mode_active = 1;
 			}
@@ -796,6 +794,11 @@ __STATIC_INLINE void sys_wake_sleep(void) {
 					XPOWERS_AXP2101_BAT_CHG_DONE_IRQ |
 					XPOWERS_AXP2101_BAT_CHG_START_IRQ  // CHARGE
 	);
+
+	// Keyboard reset for detecting boot key press
+	fifo_flush();
+	keyboard_reset();
+	keyboard_process();
 }
 
 __STATIC_INLINE void sys_stop_pico(void) {

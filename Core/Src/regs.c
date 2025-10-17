@@ -41,6 +41,12 @@ inline void reg_set_bit(enum reg_id reg, uint8_t bit) {
 	eeprom_refresh_counter = uptime_ms();
 }
 
+inline void reg_unset_bit(enum reg_id reg, uint8_t bit) {
+	regs[reg] &= ~bit;
+	REGS_UNSYNC_SET(reg);
+	eeprom_refresh_counter = uptime_ms();
+}
+
 /*
  * | Bit    | Name             | Description                                                        |
  * | ------ |:----------------:| ------------------------------------------------------------------:|

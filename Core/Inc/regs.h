@@ -71,6 +71,7 @@ uint8_t* reg_raw_access(void);
 void reg_set_value(enum reg_id reg, uint8_t value);
 uint8_t reg_is_bit_set(enum reg_id reg, uint8_t bit);
 void reg_set_bit(enum reg_id reg, uint8_t bit);
+void reg_unset_bit(enum reg_id reg, uint8_t bit);
 
 void reg_init(void);
 uint32_t reg_check_and_save_eeprom(void);
