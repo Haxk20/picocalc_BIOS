@@ -756,6 +756,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart) {
 	}
 #else
 	NULL;
+	(void)huart;
+	(void)GPIO_InitStruct;
 #endif
 }
 
@@ -797,6 +799,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart) {
 	}
 #else
 	NULL;
+	(void)huart;
 #endif
 }
 

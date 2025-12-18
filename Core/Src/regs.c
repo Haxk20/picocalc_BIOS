@@ -5,6 +5,7 @@
 #include "eeprom.h"
 #include "keyboard.h"
 #include "version.h"
+#include <stdint.h>
 
 
 extern RTC_HandleTypeDef hrtc;
@@ -105,13 +106,13 @@ uint32_t reg_check_and_save_eeprom(void) {
 
 	if (need_save == 1) {
 		if (REGS_UNSYNC_GET(REG_ID_SYS_CFG) == 1)
-			result |= EEPROM_WriteVariable(EEPROM_VAR_CFG, (EEPROM_Value)(uint16_t)((regs[REG_ID_SYS_CFG] << 8) | regs[REG_ID_INT_CFG]), EEPROM_SIZE16);
+			result |= EEPROM_WriteVariable(EEPROM_VAR_CFG, (EEPROM_Value){.uInt16 = (uint16_t)((regs[REG_ID_SYS_CFG] << 8) | regs[REG_ID_INT_CFG])}, EEPROM_SIZE16);
 
 		if (REGS_UNSYNC_GET(REG_ID_DEB) == 1 || REGS_UNSYNC_GET(REG_ID_FRQ) == 1)
-			result |= EEPROM_WriteVariable(EEPROM_VAR_KBD, (EEPROM_Value)(uint32_t)((keyboard_get_hold_period() << 16) | regs[REG_ID_FRQ]), EEPROM_SIZE32);
+			result |= EEPROM_WriteVariable(EEPROM_VAR_KBD, (EEPROM_Value){.uInt32 = (uint32_t)((keyboard_get_hold_period() << 16) | regs[REG_ID_FRQ])}, EEPROM_SIZE32);
 
 		if (REGS_UNSYNC_GET(REG_ID_BKL) == 1 || REGS_UNSYNC_GET(REG_ID_BK2) == 1)
-			result |= EEPROM_WriteVariable(EEPROM_VAR_BCKL, (EEPROM_Value)(uint16_t)((regs[REG_ID_BKL] << 8) | regs[REG_ID_BK2]), EEPROM_SIZE16);
+			result |= EEPROM_WriteVariable(EEPROM_VAR_BCKL, (EEPROM_Value){.uInt16 = (uint16_t)((regs[REG_ID_BKL] << 8) | regs[REG_ID_BK2])}, EEPROM_SIZE16);
 
 		if (REGS_UNSYNC_GET(REG_ID_RTC_ALARM_TIME) == 1 || REGS_UNSYNC_GET(REG_ID_RTC_CFG) == 1) {
 			HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR2, ((rtc_alarm_time.raw & 0xFF) << 8) | regs[REG_ID_RTC_CFG]);
