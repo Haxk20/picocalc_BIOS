@@ -151,7 +151,7 @@ SPECS ?= nano.specs
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -std=gnu17 -Wall -Wextra -fdata-sections -ffunction-sections --specs=$(SPECS)
 
-CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -std=gnu17 -Wall -Wextra -pedantic -Wconversion -fdata-sections -ffunction-sections --specs=$(SPECS)
+CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -std=gnu17 -Wall -Wextra -pedantic -Wno-unused-parameter -fdata-sections -ffunction-sections --specs=$(SPECS)
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2
