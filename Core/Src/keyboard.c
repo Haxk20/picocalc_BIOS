@@ -115,35 +115,35 @@ uint8_t io_matrix[9] = {0};		//for IO matrix,last byte is the restore key(c64 on
 uint8_t js_bits = 0xFF;			// c64 joystick bits
 
 
-inline void keyboard_set_key_callback(key_callback callback) {
+void keyboard_set_key_callback(key_callback callback) {
 	_key_callback = callback;
 }
 
-inline void keyboard_set_lock_callback(lock_callback callback) {
+void keyboard_set_lock_callback(lock_callback callback) {
 	_lock_callback = callback;
 }
 
-inline uint8_t keyboard_get_capslock(void) {
+uint8_t keyboard_get_capslock(void) {
 	return capslock & 0x1;
 }
 
-inline uint8_t keyboard_get_numlock(void) {
+uint8_t keyboard_get_numlock(void) {
 	return numlock & 0x1;
 }
 
-inline uint16_t keyboard_get_hold_period(void) {
+uint16_t keyboard_get_hold_period(void) {
 	return hold_period;
 }
 
-inline void keyboard_set_hold_period(uint16_t value) {
+void keyboard_set_hold_period(uint16_t value) {
 	hold_period = value;
 }
 
-inline uint8_t keyboard_get_shift(void) {
+uint8_t keyboard_get_shift(void) {
 	return (mods[MOD_SHL] || mods[MOD_SHR]);
 }
 
-inline uint8_t keyboard_get_alt(void) {
+uint8_t keyboard_get_alt(void) {
 	return (mods[MOD_ALT] | numlock);
 }
 
@@ -334,7 +334,7 @@ void keyboard_process(void) {
 			// Scan for rows
 			for (uint8_t r = 0; r < NUM_OF_ROWS; ++r) {
 				const uint8_t pressed = (LL_GPIO_IsInputPinSet(row_pins[r].GPIOx, row_pins[r].PinMask) == 0);
-				uint8_t row_bit = (1 << r);
+				uint8_t row_bit = (uint8_t)(1 << r);
 
 				if (pressed) {
 					if (c == 1 && r == 4)

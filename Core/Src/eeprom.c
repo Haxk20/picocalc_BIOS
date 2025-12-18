@@ -7,7 +7,7 @@
 
 
 //private function prototypes;
-static EEPROM_Result EEPROM_PageTransfer();
+static EEPROM_Result EEPROM_PageTransfer(void);
 static EEPROM_Result EEPROM_SetPageStatus(EEPROM_Page Page, EEPROM_PageStatus PageStatus);
 static EEPROM_Result EEPROM_PageToIndex(EEPROM_Page Page);
 
@@ -33,7 +33,7 @@ static uint32_t EEPROM_NextIndex = 0;
 // - resume page transfer if needed
 //
 // return: EEPROM_SUCCESS, EEPROM_NO_VALID_PAGE, EEPROM_FULL, EEPROM_ERROR, EEPROM_BUSY, EEPROM_TIMEOUT
-EEPROM_Result EEPROM_Init()
+EEPROM_Result EEPROM_Init(void)
 {
 	EEPROM_Result result;
 
@@ -90,7 +90,7 @@ EEPROM_Result EEPROM_Init()
 		}
 		else
 		{
-			result = EEPROM_PageTransfer(EEPROM_ValidPage, EEPROM_ReceivingPage);
+			result = EEPROM_PageTransfer();
 			if (result != EEPROM_SUCCESS) return result;
 		}
 	}
@@ -148,7 +148,7 @@ EEPROM_Result EEPROM_ReadVariable(uint16_t VariableName, EEPROM_Value* Value)
 // Value:			value to be written
 // Size:			size of "Value" as EEPROM_Size
 // return:			EEPROM_SUCCESS, EEPROM_NO_VALID_PAGE, EEPROM_FULL, EEPROM_ERROR, EEPROM_BUSY, EEPROM_TIMEOUT
-EEPROM_Result EEPROM_WriteVariable(uint16_t VariableName, EEPROM_Value Value, uint8_t Size)
+EEPROM_Result EEPROM_WriteVariable(uint16_t VariableName, EEPROM_Value Value, EEPROM_Size Size)
 {
 	EEPROM_Result result;
 
@@ -207,7 +207,7 @@ EEPROM_Result EEPROM_WriteVariable(uint16_t VariableName, EEPROM_Value Value, ui
 
 		//update index & size table
 		EEPROM_Index[VariableName] = (uint16_t)(EEPROM_NextIndex + 2 - EEPROM_START_ADDRESS);
-		EEPROM_SizeTable[VariableName] = Size;
+		EEPROM_SizeTable[VariableName] = (uint8_t)Size;
 		if (Size == EEPROM_SIZE_DELETED) EEPROM_Index[VariableName] = 0;
 
 		//update next index
@@ -226,7 +226,7 @@ EEPROM_Result EEPROM_WriteVariable(uint16_t VariableName, EEPROM_Value Value, ui
 // return:			EEPROM_SUCCESS, EEPROM_NO_VALID_PAGE, EEPROM_FULL, EEPROM_ERROR, EEPROM_BUSY, EEPROM_TIMEOUT
 EEPROM_Result EEPROM_DeleteVariable(uint16_t VariableName)
 {
-	return EEPROM_WriteVariable(VariableName, (EEPROM_Value) (uint16_t) 0, EEPROM_SIZE_DELETED);
+	return EEPROM_WriteVariable(VariableName, (EEPROM_Value){.uInt16 = 0}, EEPROM_SIZE_DELETED);
 }
 
 
@@ -240,7 +240,7 @@ EEPROM_Result EEPROM_DeleteVariable(uint16_t VariableName)
 // - mark receiving page as valid
 //
 // return: EEPROM_SUCCESS, EEPROM_NO_VALID_PAGE, EEPROM_FULL, EEPROM_ERROR, EEPROM_BUSY, EEPROM_TIMEOUT
-static EEPROM_Result EEPROM_PageTransfer()
+static EEPROM_Result EEPROM_PageTransfer(void)
 {
 	EEPROM_Result result;
 	EEPROM_Value Value;
@@ -409,7 +409,7 @@ static EEPROM_Result EEPROM_PageToIndex(EEPROM_Page Page)
 			}
 
 			//calculate size in bytes from size code
-			Size = 1 << SizeCode;
+			Size = (uint8_t)(1 << SizeCode);
 			if (SizeCode == EEPROM_SIZE_DELETED) Size = 0;
 		}
 

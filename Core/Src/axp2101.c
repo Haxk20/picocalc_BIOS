@@ -29,7 +29,7 @@ __STATIC_INLINE uint16_t readRegisterH6L8(uint8_t highReg, uint8_t lowReg) {
 	int8_t l8_s = readRegister(lowReg, &l8, 1);
 	if (h6_s == -1 || l8_s == -1)
 		return 0;
-	return ((h6 & 0x3F) << 8) | l8;
+	return (uint16_t)((h6 & 0x3F) << 8) | l8;
 }
 
 __STATIC_INLINE uint16_t readRegisterH5L8(uint8_t highReg, uint8_t lowReg) {
@@ -39,7 +39,7 @@ __STATIC_INLINE uint16_t readRegisterH5L8(uint8_t highReg, uint8_t lowReg) {
 	int8_t l8_s = readRegister(lowReg, &l8, 1);
 	if (h5_s == -1 || l8_s == -1)
 		return 0;
-	return ((h5 & 0x1F) << 8) | l8;
+	return (uint16_t)((h5 & 0x1F) << 8) | l8;
 }
 
 __STATIC_INLINE uint8_t clrRegisterBit(uint8_t registers, uint8_t bit) {
@@ -51,7 +51,7 @@ __STATIC_INLINE uint8_t clrRegisterBit(uint8_t registers, uint8_t bit) {
 		return 1;
 
 	reg_value &= (uint8_t)(~_BV(bit));
-	return HAL_I2C_Mem_Write(&hi2c2, AXP2101_DEV_I2C_ID, registers, 1, &reg_value, 1, 60);
+	return (uint8_t)HAL_I2C_Mem_Write(&hi2c2, AXP2101_DEV_I2C_ID, registers, 1, &reg_value, 1, 60);
 }
 
 __STATIC_INLINE uint8_t getRegisterBit(uint8_t registers, uint8_t bit) {
@@ -74,7 +74,7 @@ __STATIC_INLINE uint8_t setRegisterBit(uint8_t registers, uint8_t bit) {
 		return 1;
 
 	reg_value |= (uint8_t)(_BV(bit));
-	return HAL_I2C_Mem_Write(&hi2c2, AXP2101_DEV_I2C_ID, registers, 1, &reg_value, 1, 60);
+	return (uint8_t)HAL_I2C_Mem_Write(&hi2c2, AXP2101_DEV_I2C_ID, registers, 1, &reg_value, 1, 60);
 }
 
 uint32_t setInterruptImpl(uint32_t opts, uint8_t enable) {

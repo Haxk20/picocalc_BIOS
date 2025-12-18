@@ -7,11 +7,11 @@ static volatile uint8_t read_idx = 0;
 static volatile uint8_t write_idx = 0;
 
 
-inline uint8_t fifo_count(void) {
+uint8_t fifo_count(void) {
 	return count;
 }
 
-inline void fifo_flush(void) {
+void fifo_flush(void) {
 	write_idx = 0;
 	read_idx = 0;
 	count = 0;

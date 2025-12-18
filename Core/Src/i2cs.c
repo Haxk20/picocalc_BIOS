@@ -78,7 +78,7 @@ extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirect
 				} else if (reg == REG_ID_FIF) {
 					struct fifo_item item = {0};
 					fifo_dequeue(&item);
-					i2cs_w_buff[0] = item.state;
+					i2cs_w_buff[0] = (uint8_t)item.state;
 					i2cs_w_buff[1] = item.key;
 				} else if (reg == REG_ID_INT) {
 					if (is_write)

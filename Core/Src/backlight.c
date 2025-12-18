@@ -85,9 +85,9 @@ inline void kbd_backlight_update(uint8_t step) {
 
 	// In case the user ask for a 0-255 range (like in the official driver), convert to the 9-bit (0-511) range
 	if (step >= KBD_BCKL_STEPS)
-			val = (uint16_t)((step - kbd_bckl_steps[0]) * 511 / 255) % 512;
-		else
-			val = kbd_bckl_steps[index];
+		val = (uint16_t)((step - kbd_bckl_steps[0]) * 511 / 255) % 512;
+	else
+		val = kbd_bckl_steps[index];
 
 	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, val);
 
