@@ -14,15 +14,10 @@ void show_bat_segs(void) {
 	if (AXP2101_getBatteryPercent(&pcnt) != HAL_OK)
 		return;
 
-	uint8_t blink_cnt = 1;
-
-	//if(pcnt > 0 && pcnt < 33)
-	//	blink_cnt = 1;
-	//else
-	if(pcnt >= 33 && pcnt < 66)
-		blink_cnt = 2;
-	else if(pcnt >= 66 && pcnt <= 100)
-		blink_cnt = 3;
+	uint8_t blink_cnt = pcnt / 25;
+	if (blink_cnt == 0) {
+    	blink_cnt = 1;
+	}
 
 	if (AXP2101_isCharging())
 		start_chg();
